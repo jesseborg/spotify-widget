@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		font-size: 16px;
+		line-height: 24px;
+
+		font-synthesis: none;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		-webkit-text-size-adjust: 100%;
+
+		font-feature-settings: 'salt' on;
+
+		overflow: hidden;
+
+		--theme-50: 255 255 255;
+		--theme-100: 239 239 239;
+		--theme-200: 220 220 220;
+		--theme-300: 189 189 189;
+		--theme-400: 152 152 152;
+		--theme-500: 124 124 124;
+		--theme-600: 101 101 101;
+		--theme-700: 82 82 82;
+		--theme-800: 70 70 70;
+		--theme-900: 61 61 61;
+		--theme-prominant: 245 245 245;
+	}
+
+	@font-face {
+		font-family: 'Satoshi';
+		src: url('/fonts/Satoshi-Variable.woff2') format('woff2 supports variations'),
+			url('/fonts/Satoshi-Variable.woff2') format('woff2-variations');
+		font-weight: 100 1000;
+	}
+}
