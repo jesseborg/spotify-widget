@@ -30,3 +30,5 @@ export const updateTheme = (
 		`${prominantColor[0]} ${prominantColor[1]} ${prominantColor[2]}`
 	);
 };
+
+export const resetTheme = () => updateTheme();
