@@ -11,6 +11,7 @@ enum Method {
   Pause,
   Next,
   Previous,
+  SetPlaybackPosition(usize),
 }
 
 #[derive(Serialize, Deserialize, rspc::Type)]
@@ -30,6 +31,7 @@ pub(crate) fn media_router() -> RouterBuilder {
             Method::Pause => session.pause(),
             Method::Next => session.skip_next(),
             Method::Previous => session.skip_previous(),
+            Method::SetPlaybackPosition(value) => session.set_playback_position(value as i64),
           };
         }
       })

@@ -1,6 +1,7 @@
-import { FC, HTMLAttributes, useState } from 'react';
+import { FC, HTMLAttributes, useEffect, useState } from 'react';
 import { MediaTimelineData } from '../utils/bindings';
 import { clsx } from '../utils/clsx';
+import { rspc } from '../utils/rspc';
 import { formatTime } from '../utils/time';
 import { PropsWithLoading } from '../utils/types';
 import { Slider } from './base/Slider';
@@ -11,12 +12,12 @@ type TimelineProps = {
 };
 
 type FormattedTimeProps = {
-	value?: number;
+	value: number;
 	hide?: boolean;
 };
 
 const FormattedTime: FC<FormattedTimeProps & HTMLAttributes<HTMLParagraphElement>> = ({
-	value,
+	value = 0,
 	hide,
 	className,
 	...props
@@ -33,26 +34,33 @@ const FormattedTime: FC<FormattedTimeProps & HTMLAttributes<HTMLParagraphElement
 	);
 };
 
-export const Timeline: FC<PropsWithLoading<TimelineProps>> = ({ data, isPlaying, loading }) => {
-	const timelinePosition = Number(data?.timelinePosition ?? 0) / 10000;
-	const timelineEndTime = Number(data?.timelineEndTime ?? 0) / 10000;
+export const Timeline: FC<PropsWithLoading<TimelineProps>> = ({ data, loading }) => {
+	const { mutateAsync: invokeMethod } = rspc.useMutation('media.invokeMethod');
+
+	const [timelinePosition, setTimelinePosition] = useState(Number(data?.timelinePosition ?? 0));
+	const timelineEndTime = Number(data?.timelineEndTime ?? 0);
 
 	const [sliderPosition, setSliderPosition] = useState(timelinePosition);
 	const timelinePositionPercent = (sliderPosition / timelineEndTime) * 100;
 
 	const [isDragging, setIsDragging] = useState(false);
 
-	const handleValueChange = (value: number[]) => {
+	const handleValueChange = (value: number) => {
 		setIsDragging(true);
-		// console.log(value);
-
-		setSliderPosition(value[0]);
+		setSliderPosition(value);
 	};
 
-	const handleValueCommit = (value: number[]) => {
+	const handleValueCommit = async (value: number) => {
 		setIsDragging(false);
-		// emit event to backend
+		setSliderPosition(value);
+		setTimelinePosition(value);
+
+		await invokeMethod({ setPlaybackPosition: value });
 	};
+
+	useEffect(() => {
+		setTimelinePosition(Number(data?.timelinePosition ?? 0));
+	}, [data?.timelinePosition]);
 
 	if (loading) {
 		return (
@@ -79,16 +87,17 @@ export const Timeline: FC<PropsWithLoading<TimelineProps>> = ({ data, isPlaying,
 						left: `${timelinePositionPercent}%`,
 						transform: `translateX(-${timelinePositionPercent}%)`
 					}}
-					className={clsx('absolute -top-1/2 opacity-0 transition-all', {
-						'opacity-100 transition-none': isDragging
+					className={clsx('absolute -top-1/2 transition-all', {
+						'transition-none': isDragging
 					})}
 					value={sliderPosition}
+					hide={!isDragging}
 				/>
 				<Slider
 					value={[isDragging ? sliderPosition : timelinePosition]}
 					max={timelineEndTime}
-					onValueChange={handleValueChange}
-					onValueCommit={handleValueCommit}
+					onValueChange={([value]) => handleValueChange(value)}
+					onValueCommit={([value]) => handleValueCommit(value)}
 				/>
 			</span>
 		</div>

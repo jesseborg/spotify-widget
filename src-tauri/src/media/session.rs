@@ -177,9 +177,9 @@ impl Session {
 
 					event_sender.send(MediaEvent::TimelinePropertiesChanged(
 						MediaTimelineData {
-							timeline_start_time: timeline.StartTime().unwrap().Duration,
-							timeline_end_time: timeline.EndTime().unwrap().Duration,
-							timeline_position: timeline.Position().unwrap().Duration,
+							timeline_start_time: timeline.StartTime().unwrap().Duration as usize,
+							timeline_end_time: timeline.EndTime().unwrap().Duration as usize,
+							timeline_position: timeline.Position().unwrap().Duration as usize,
 						}
 					)).unwrap();
 
@@ -262,9 +262,7 @@ impl Session {
       .unwrap();
   }
 
-  #[allow(dead_code)]
   pub fn set_playback_position(&self, value: i64) {
-    let value = value * 10000;
     println!("tried to set playback position: {}", value);
     self.controls.TryChangePlaybackPositionAsync(value).unwrap();
   }

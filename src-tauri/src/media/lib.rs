@@ -23,9 +23,9 @@ pub struct MediaPlaybackData {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, rspc::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaTimelineData {
-  pub timeline_start_time: i64,
-  pub timeline_end_time: i64,
-  pub timeline_position: i64,
+  pub timeline_start_time: usize,
+  pub timeline_end_time: usize,
+  pub timeline_position: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, rspc::Type)]
@@ -33,7 +33,7 @@ pub struct MediaTimelineData {
 pub struct ThumbnailData {
   pub base64: String,
   pub palette: TailwindPalette,
-	pub prominant_color: (u8, u8, u8)
+  pub prominant_color: (u8, u8, u8),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, rspc::Type)]

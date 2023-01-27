@@ -18,9 +18,9 @@ export interface MediaPlaybackData { isPlaying: boolean }
 
 export interface MediaSessionData { isPlayEnabled: boolean, isPauseEnabled: boolean, isPlayOrPauseEnabled: boolean, isPreviousEnabled: boolean, isNextEnabled: boolean, title: string, artist: string, thumbnail: ThumbnailData }
 
-export interface MediaTimelineData { timelineStartTime: bigint, timelineEndTime: bigint, timelinePosition: bigint }
+export interface MediaTimelineData { timelineStartTime: number, timelineEndTime: number, timelinePosition: number }
 
-export type Method = "play" | "pause" | "next" | "previous"
+export type Method = "play" | "pause" | "next" | "previous" | { setPlaybackPosition: number }
 
 export interface SessionChangedData { appId: string, sessionActive: boolean }
 
