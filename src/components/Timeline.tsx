@@ -3,7 +3,6 @@ import { MediaTimelineData } from '../utils/bindings';
 import { clsx } from '../utils/clsx';
 import { rspc } from '../utils/rspc';
 import { formatTime } from '../utils/time';
-import { PropsWithLoading } from '../utils/types';
 import { Slider } from './base/Slider';
 
 type TimelineProps = {
@@ -34,7 +33,7 @@ const FormattedTime: FC<FormattedTimeProps & HTMLAttributes<HTMLParagraphElement
 	);
 };
 
-export const Timeline: FC<PropsWithLoading<TimelineProps>> = ({ data, loading }) => {
+export const Timeline: FC<TimelineProps> = ({ data }) => {
 	const { mutateAsync: invokeMethod } = rspc.useMutation('media.invokeMethod');
 
 	const [timelinePosition, setTimelinePosition] = useState(Number(data?.timelinePosition ?? 0));
@@ -61,12 +60,6 @@ export const Timeline: FC<PropsWithLoading<TimelineProps>> = ({ data, loading })
 	useEffect(() => {
 		setTimelinePosition(Number(data?.timelinePosition ?? 0));
 	}, [data?.timelinePosition]);
-
-	if (loading) {
-		return (
-			<span className="absolute bottom-0 block h-2 w-full animate-pulse rounded-full bg-theme-200 duration-200" />
-		);
-	}
 
 	return (
 		<div className="pointer-events-auto flex flex-1 flex-col gap-1 text-[10px] text-theme-100">
