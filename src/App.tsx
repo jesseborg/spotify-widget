@@ -8,6 +8,7 @@ import { MediaPlaybackData, MediaSessionData, MediaTimelineData } from './utils/
 import { clsx } from './utils/clsx';
 import { resetTheme, updateTheme } from './utils/color';
 import { rspc } from './utils/rspc';
+import { tryAppendArtistFromTitle } from './utils/utils';
 
 const LoadingSkeleton = () => {
 	return (
@@ -41,7 +42,8 @@ function App() {
 	rspc.useSubscription(['media.mediaPropertiesChanged'], {
 		onData: (data) => {
 			console.log(data);
-			setMetadata(data);
+
+			setMetadata({ ...data, artist: tryAppendArtistFromTitle(data.artist, data.title) });
 			updateTheme(data.thumbnail.palette.shades, data.thumbnail.prominantColor);
 		}
 	});
