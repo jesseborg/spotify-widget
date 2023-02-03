@@ -6,8 +6,6 @@ authors = ["Jesse B."]
 edition = "2021"
 rust-version = "1.57"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [build-dependencies]
 tauri-build = { version = "1.2", features = [] }
 
@@ -23,25 +21,22 @@ image = "0.24.5"
 base64 = "0.20.0"
 dominant_color = "0.3.0"
 tailwind-palette = { path = '../../tailwind-palette' }
+windows-volume-mixer = { path = '../../windows-volume-mixer' }
 prominence = "0.1.0"
 async-stream = "0.3.3"
 
 [dependencies.windows]
 	version = "0.43.0"
 	features = [
-    "Win32_UI_Controls",
-    "Win32_System_Com",
-    "Win32_System_LibraryLoader",
-    "Win32_Graphics",
-    "Win32_Graphics_Dwm",
-    "Win32_Foundation",
-    "Win32_Media_Audio",
     "Foundation",
-    "Foundation_Collections",
-    "Media",
     "Media_Control",
     "Security_Cryptography",
     "Storage_Streams",
+    "Win32_Media_Audio",
+		"Win32_System_Com",
+		"Win32_Foundation",
+		"Win32_System_Com_StructuredStorage",
+		"Foundation_Collections"
 	]
 
 [features]

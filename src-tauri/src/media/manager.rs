@@ -19,7 +19,6 @@ pub struct InnerMediaManager {
 
 impl InnerMediaManager {
   pub fn get_session(&self) -> MutexGuard<'_, Option<Session>> { self.session.lock().unwrap() }
-
   pub fn set_session(&self, session: Option<Session>) { *self.session.lock().unwrap() = session; }
 }
 
@@ -84,7 +83,10 @@ impl MediaManager {
             inner.set_session(Some(Session::new(session, event_bus.clone()).build()));
           });
 
-        let spotify_is_active = sessions.borrow().into_iter().any(|s| has_spotify(&s));
+        let spotify_is_active = sessions
+					.borrow()
+					.into_iter()
+					.any(|s| has_spotify(&s));
 
         // If Spotify is not active, but the Session is. Emit 'Disconnect' event
         if inner.get_session().is_some() && !spotify_is_active {
@@ -99,7 +101,7 @@ impl MediaManager {
     self
       .inner
       .manager
-      .SessionsChanged(&sessions_changed_handler)
+      .SessionsChanged(sessions_changed_handler)
       .unwrap();
 
     /* Manually Invoke the handler to force check a session on startup */
@@ -112,5 +114,5 @@ impl MediaManager {
 }
 
 fn has_spotify(session: &GlobalSystemMediaTransportControlsSession) -> bool {
-  session.SourceAppUserModelId().unwrap().to_string() == "Spotify.exe"
+  session.SourceAppUserModelId().unwrap() == "Spotify.exe"
 }

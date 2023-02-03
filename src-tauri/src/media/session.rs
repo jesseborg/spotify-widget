@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use tailwind_palette::TailwindPalette;
 use windows::core::{Error as WindowsError, HRESULT};
@@ -10,6 +10,8 @@ use windows::Media::Control::{
   PlaybackInfoChangedEventArgs,
   TimelinePropertiesChangedEventArgs,
 };
+use windows_volume_mixer::events::EventCallbacks;
+use windows_volume_mixer::{AudioSessionControl, AudioSessionManager};
 
 use super::lib::EventBus;
 use crate::media::lib::{
@@ -22,7 +24,9 @@ use crate::media::lib::{
 use crate::media::manager::Error;
 use crate::utils::thumbnail::get_thumbnail_data;
 
-#[derive(Debug)]
+type ThreadSafeOption<T> = Arc<Mutex<Option<T>>>;
+
+// #[derive(Debug)]
 pub struct Session {
   pub app_id: String,
   controls: GlobalSystemMediaTransportControlsSession,
@@ -30,6 +34,9 @@ pub struct Session {
   playback_info_event_token: EventRegistrationToken,
   timeline_properties_event_token: EventRegistrationToken,
   pub event_bus: Arc<EventBus>,
+	#[allow(dead_code)]
+	audio_manager: AudioSessionManager,
+	audio_control: ThreadSafeOption<AudioSessionControl>
 }
 
 impl Session {
@@ -37,13 +44,54 @@ impl Session {
     controls: GlobalSystemMediaTransportControlsSession,
     event_bus: Arc<EventBus>,
   ) -> Self {
+    let app_id = controls.SourceAppUserModelId().unwrap().to_string();
+		let audio_control = Arc::new(Mutex::new(None));
+		
+		let audio_manager = AudioSessionManager::new()
+			.map(|mut audio_manager| {
+				let app_name = app_id.clone();
+				let event_sender = event_bus.0.clone();
+				let audio_control = audio_control.clone();
+
+				audio_manager.on_session_created(move |session| {
+					let event_sender = event_sender.clone();
+
+					if let Ok(process_name) = session.process_name() {
+						println!("Session: {process_name}");
+						
+						if process_name != app_name {
+							return;
+						}
+
+						let volume = session.volume_control().get_volume();
+						event_sender.send(MediaEvent::VolumeChanged(volume)).unwrap();
+
+						session.register_session_notification(
+							EventCallbacks::new()
+								.on_volume_changed(move |volume, _, _| {
+									event_sender.send(MediaEvent::VolumeChanged(volume)).unwrap();
+								})
+								.build(),
+						).unwrap();
+
+						*audio_control.lock().unwrap() = Some(session);
+					}
+				}).unwrap();
+
+				audio_manager
+			})
+			.map_err(|e| println!("Session::new | audio_manager: {:?}", e))
+			.unwrap();
+
     Self {
-      app_id: controls.SourceAppUserModelId().unwrap().to_string(),
+      app_id,
       controls,
       media_properites_event_token: EventRegistrationToken::default(),
       playback_info_event_token: EventRegistrationToken::default(),
       timeline_properties_event_token: EventRegistrationToken::default(),
       event_bus,
+			audio_manager,
+			audio_control
     }
   }
 
@@ -262,11 +310,6 @@ impl Session {
       .unwrap();
   }
 
-  pub fn set_playback_position(&self, value: i64) {
-    println!("tried to set playback position: {}", value);
-    self.controls.TryChangePlaybackPositionAsync(value).unwrap();
-  }
-
   pub fn play(&self) {
     println!("tried to play");
     self.controls.TryPlayAsync().unwrap();
@@ -285,5 +328,28 @@ impl Session {
   pub fn skip_previous(&self) {
     println!("tried to skip previous");
     self.controls.TrySkipPreviousAsync().unwrap();
+  }
+
+  pub fn set_playback_position(&self, value: i64) {
+    println!("tried to set playback position: {}", value);
+    self.controls.TryChangePlaybackPositionAsync(value).unwrap();
+  }
+
+  pub fn get_volume(&self) -> f32 {
+    println!("tried to get volume");
+
+		if let Some(session) = self.audio_control.lock().unwrap().as_ref() {
+			return session.volume_control().get_volume()
+		}
+
+    -1.0
+  }
+
+  pub fn set_volume(&self, volume: f32) {
+    println!("tried to set volume: {volume}");
+
+		if let Some(session) = self.audio_control.lock().unwrap().as_ref() {
+			session.volume_control().set_volume(volume).unwrap();
+		}
   }
 }

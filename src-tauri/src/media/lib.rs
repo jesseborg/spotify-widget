@@ -12,6 +12,7 @@ pub enum MediaEvent {
   MediaPropertiesChanged(MediaSessionData),
   PlaybackInfoChanged(MediaPlaybackData),
   TimelinePropertiesChanged(MediaTimelineData),
+  VolumeChanged(f32),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, rspc::Type)]

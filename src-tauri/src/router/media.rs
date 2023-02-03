@@ -12,6 +12,7 @@ enum Method {
   Next,
   Previous,
   SetPlaybackPosition(usize),
+  SetVolume(f32),
 }
 
 #[derive(Serialize, Deserialize, rspc::Type)]
@@ -31,9 +32,19 @@ pub(crate) fn media_router() -> RouterBuilder {
             Method::Pause => session.pause(),
             Method::Next => session.skip_next(),
             Method::Previous => session.skip_previous(),
-            Method::SetPlaybackPosition(value) => session.set_playback_position(value as i64),
+            Method::SetPlaybackPosition(position) => session.set_playback_position(position as i64),
+            Method::SetVolume(volume) => session.set_volume(volume),
           };
         }
+      })
+    })
+    .query("getVolume", |t| {
+      t(|ctx, _: ()| {
+        if let Some(session) = ctx.manager.get_session().as_ref() {
+          return session.get_volume()
+        }
+
+        0.5
       })
     })
     .subscription("sessionChanged", |t| {
@@ -90,6 +101,19 @@ pub(crate) fn media_router() -> RouterBuilder {
           while let Ok(event) = event_bus.recv().await {
             match event {
               MediaEvent::TimelinePropertiesChanged(data) => yield data,
+              _ => {}
+            }
+          }
+        }
+      })
+    })
+    .subscription("volumeChanged", |t| {
+      t(|ctx, _input: ()| {
+        async_stream::stream! {
+          let mut event_bus = ctx.event_bus.0.subscribe();
+          while let Ok(event) = event_bus.recv().await {
+            match event {
+              MediaEvent::VolumeChanged(data) => yield data,
               _ => {}
             }
           }

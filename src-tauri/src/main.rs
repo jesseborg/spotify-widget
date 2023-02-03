@@ -22,10 +22,9 @@ struct InnerAppState {
 struct AppState(Mutex<InnerAppState>);
 
 fn handle_menu_item_click(id: String) {
-  match id.as_str() {
-    "quit" => std::process::exit(0),
-    _ => {},
-  }
+  if let "quit" = id.as_str() {
+    std::process::exit(0)
+	}
 }
 
 #[tauri::command]
@@ -41,6 +40,7 @@ fn app_ready(app_handle: tauri::AppHandle, state: tauri::State<'_, AppState>) {
 
   let router = router::router::new();
   let event_bus = Arc::new(broadcast::channel::<MediaEvent>(1024));
+	
   let manager = media::manager::MediaManager::new(event_bus.clone())
     .unwrap()
     .build()
@@ -63,9 +63,8 @@ async fn main() {
   tauri::Builder::default()
     .manage(AppState(Mutex::new(InnerAppState { initialized: false })))
     .system_tray(SystemTray::new().with_menu(tray_menu))
-    .on_system_tray_event(|_, event| match event {
-      SystemTrayEvent::MenuItemClick { id, .. } => handle_menu_item_click(id),
-      _ => {},
+    .on_system_tray_event(|_, event| if let SystemTrayEvent::MenuItemClick { id, .. } = event {
+        handle_menu_item_click(id)
     })
     .setup(|app| {
       if let Some(window) = app.get_window("main") {

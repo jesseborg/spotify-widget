@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Thumbnail } from './components/Thumbnail';
 import { Timeline } from './components/Timeline';
-import { VolumeSlider } from './components/VolumeSlider';
+import { VolumeSlider, VolumeSliderSkeletonLoader } from './components/VolumeSlider';
 
 import { MediaPlaybackData, MediaSessionData, MediaTimelineData } from './utils/bindings';
 import { clsx } from './utils/clsx';
@@ -21,13 +21,12 @@ const LoadingSkeleton = () => {
 				</div>
 
 				{/* Timeline */}
-				<div className="pointer-events-auto relative">
+				<div className="pointer-events-auto relative mr-2">
 					<span className="absolute bottom-0 block h-2 w-full animate-pulse rounded-full bg-theme-200 duration-200" />
 				</div>
 			</div>
 
-			{/* Volume Slider */}
-			<span className="ml-2 block h-full w-2 animate-pulse rounded-full bg-theme-200 duration-200" />
+			<VolumeSliderSkeletonLoader />
 		</>
 	);
 };
