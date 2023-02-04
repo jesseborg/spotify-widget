@@ -27,7 +27,7 @@ pub async fn get_thumbnail_data(
   let bytes = &mut windows::core::Array::<u8>::new();
   CryptographicBuffer::CopyToByteArray(&buffer, bytes).unwrap();
 
-  match load_from_memory(&bytes.as_bytes()) {
+  match load_from_memory(bytes.as_bytes()) {
     Ok(mut image) => {
       /* Crop the Spotify watermark out of the image */
       let image = image.crop(34, 1, 234, 234);
