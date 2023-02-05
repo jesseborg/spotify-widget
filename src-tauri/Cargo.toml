@@ -26,7 +26,7 @@ prominence = "0.1.0"
 async-stream = "0.3.3"
 
 [dependencies.windows]
-	version = "0.43.0"
+	version = "0.44.0"
 	features = [
     "Foundation",
     "Media_Control",
