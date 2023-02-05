@@ -21,7 +21,6 @@ use crate::media::lib::{
   MediaTimelineData,
   ThumbnailData,
 };
-use crate::media::manager::Error;
 use crate::utils::thumbnail::get_thumbnail_data;
 
 type ThreadSafeOption<T> = Arc<Mutex<Option<T>>>;
@@ -35,7 +34,7 @@ pub struct Session {
   timeline_properties_event_token: EventRegistrationToken,
   pub event_bus: Arc<EventBus>,
 	#[allow(dead_code)]
-	audio_manager: AudioSessionManager,
+	audio_manager: Option<AudioSessionManager>,
 	audio_control: ThreadSafeOption<AudioSessionControl>
 }
 
@@ -44,54 +43,17 @@ impl Session {
     controls: GlobalSystemMediaTransportControlsSession,
     event_bus: Arc<EventBus>,
   ) -> Self {
-    let app_id = controls.SourceAppUserModelId().unwrap().to_string();
-		let audio_control = Arc::new(Mutex::new(None));
-		
-		let audio_manager = AudioSessionManager::new()
-			.map(|mut audio_manager| {
-				let app_name = app_id.clone();
-				let event_sender = event_bus.0.clone();
-				let audio_control = audio_control.clone();
-
-				audio_manager.on_session_created(move |session| {
-					let event_sender = event_sender.clone();
-
-					if let Ok(process_name) = session.process_name() {
-						println!("Session: {process_name}");
-						
-						if process_name != app_name {
-							return;
-						}
-
-						let volume = session.volume_control().get_volume();
-						event_sender.send(MediaEvent::VolumeChanged(volume)).unwrap();
-
-						session.register_session_notification(
-							EventCallbacks::new()
-								.on_volume_changed(move |volume, _, _| {
-									event_sender.send(MediaEvent::VolumeChanged(volume)).unwrap();
-								})
-								.build(),
-						).unwrap();
-
-						*audio_control.lock().unwrap() = Some(session);
-					}
-				}).unwrap();
-
-				audio_manager
-			})
-			.map_err(|e| println!("Session::new | audio_manager: {:?}", e))
-			.unwrap();
+    println!("[MediaSession] new");
 
     Self {
-      app_id,
+      app_id: controls.SourceAppUserModelId().unwrap().to_string(),
       controls,
       media_properites_event_token: EventRegistrationToken::default(),
       playback_info_event_token: EventRegistrationToken::default(),
       timeline_properties_event_token: EventRegistrationToken::default(),
       event_bus,
-			audio_manager,
-			audio_control
+			audio_manager: None,
+			audio_control: Arc::new(Mutex::new(None))
     }
   }
 
@@ -99,21 +61,20 @@ impl Session {
     &self,
   ) -> TypedEventHandler<GlobalSystemMediaTransportControlsSession, MediaPropertiesChangedEventArgs>
   {
+		println!("[MediaSession] media_properties_handler");
     TypedEventHandler::<
       GlobalSystemMediaTransportControlsSession,
       MediaPropertiesChangedEventArgs,
     >::new({
 			let event_sender = self.event_bus.0.clone();
-
+		
 			self.invoke_playback_info_handler();
 			self.invoke_timeline_properties_handler();
 
       move |sender, _args| {
         match futures::executor::block_on(async {
-					println!("media session changed");
-
           let Some(session) = sender else {
-						return Ok::<(), Error>(());
+						return Ok::<(), windows::core::Error>(());
 					};
 
           let Ok(props) = session.TryGetMediaPropertiesAsync()?.await else {
@@ -177,6 +138,7 @@ impl Session {
     &self,
   ) -> TypedEventHandler<GlobalSystemMediaTransportControlsSession, PlaybackInfoChangedEventArgs>
   {
+		println!("[MediaSession] playback_info_handler");
     TypedEventHandler::<
       GlobalSystemMediaTransportControlsSession,
       PlaybackInfoChangedEventArgs,
@@ -186,7 +148,7 @@ impl Session {
       move |sender, _args| {
         futures::executor::block_on(async {
 					let Ok(playback_info) = sender.as_ref().unwrap().GetPlaybackInfo() else {
-						return Ok::<(), Error>(());
+						return Ok::<(), windows::core::Error>(());
 					};
 
 					event_sender.send(MediaEvent::PlaybackInfoChanged(
@@ -209,6 +171,7 @@ impl Session {
     GlobalSystemMediaTransportControlsSession,
     TimelinePropertiesChangedEventArgs,
   > {
+		println!("[MediaSession] timeline_properties_handler");
     TypedEventHandler::<
       GlobalSystemMediaTransportControlsSession,
       TimelinePropertiesChangedEventArgs,
@@ -218,10 +181,8 @@ impl Session {
       move |sender, _args| {
         futures::executor::block_on(async {
 					let Ok(timeline) = sender.as_ref().unwrap().GetTimelineProperties() else {
-						return Ok::<(), Error>(());
+						return Ok::<(), windows::core::Error>(());
 					};
-
-					println!("[timeline_properties_handler]");
 
 					event_sender.send(MediaEvent::TimelinePropertiesChanged(
 						MediaTimelineData {
@@ -239,6 +200,7 @@ impl Session {
   }
 
   pub fn invoke_media_properties_handler(&self) {
+		println!("[MediaSession] invoke_media_properties_handler");
     self
       .media_properties_handler()
       .Invoke(&self.controls, None)
@@ -246,6 +208,7 @@ impl Session {
   }
 
   pub fn invoke_playback_info_handler(&self) {
+		println!("[MediaSession] invoke_playback_info_handler");
     self
       .playback_info_handler()
       .Invoke(&self.controls, None)
@@ -253,6 +216,7 @@ impl Session {
   }
 
   pub fn invoke_timeline_properties_handler(&self) {
+		println!("[MediaSession] invoke_timeline_properties_handler");
     self
       .timeline_properties_handler()
       .Invoke(&self.controls, None)
@@ -260,9 +224,49 @@ impl Session {
   }
 
   pub fn build(mut self) -> Self {
-    println!("[Initialize] MediaSession");
+    println!("[MediaSession] build");
 
-    self
+		let audio_control = Arc::new(Mutex::new(None));
+		let audio_manager = AudioSessionManager::new()
+			.map(|mut audio_manager| {
+				let app_name = self.app_id.clone();
+				let event_sender = self.event_bus.0.clone();
+				let audio_control = audio_control.clone();
+
+				audio_manager.on_session_created(move |session| {
+					let event_sender = event_sender.clone();
+
+					if let Ok(process_name) = session.process_name() {
+						println!("Session: {process_name}");
+						
+						if process_name != app_name {
+							return;
+						}
+
+						let volume = session.volume_control().get_volume();
+						event_sender.send(MediaEvent::VolumeChanged(volume)).unwrap();
+
+						session.register_session_notification(
+							EventCallbacks::new()
+								.on_volume_changed(move |volume, _, _| {
+									event_sender.send(MediaEvent::VolumeChanged(volume)).unwrap();
+								})
+								.build(),
+						).unwrap();
+
+						*audio_control.lock().unwrap() = Some(session);
+					}
+				}).unwrap();
+
+				audio_manager
+			})
+			.map_err(|e| println!("Session::new | audio_manager: {:?}", e))
+			.unwrap();
+
+		self.audio_manager = Some(audio_manager);
+		self.audio_control = audio_control;
+
+    self.media_properites_event_token = self
       .controls
       .MediaPropertiesChanged(&self.media_properties_handler())
       .unwrap();
@@ -283,7 +287,7 @@ impl Session {
       .send(MediaEvent::Connect(self.app_id.to_owned()))
       .unwrap();
 
-    self
+		self
   }
 
   #[allow(dead_code)]

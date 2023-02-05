@@ -1,7 +1,6 @@
 use std::borrow::Borrow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use windows::core::{Error as WindowsError, HRESULT};
 use windows::Foundation::TypedEventHandler;
 use windows::Media::Control::{
   GlobalSystemMediaTransportControlsSession,
@@ -12,44 +11,25 @@ use windows::Media::Control::{
 use super::lib::EventBus;
 use super::session::Session;
 
-pub struct InnerMediaManager {
-  manager: GlobalSystemMediaTransportControlsSessionManager,
-  pub session: Arc<Mutex<Option<Session>>>,
-}
-
-impl InnerMediaManager {
-  pub fn get_session(&self) -> MutexGuard<'_, Option<Session>> { self.session.lock().unwrap() }
-  pub fn set_session(&self, session: Option<Session>) { *self.session.lock().unwrap() = session; }
-}
-
 pub struct MediaManager {
-  pub inner: Arc<InnerMediaManager>,
   event_bus: Arc<EventBus>,
-}
-
-#[derive(Debug)]
-pub struct Error(WindowsError);
-
-impl From<WindowsError> for Error {
-  fn from(other: WindowsError) -> Error { Error(other) }
+  manager: GlobalSystemMediaTransportControlsSessionManager,
+  session: Arc<Mutex<Option<Session>>>,
 }
 
 impl MediaManager {
-  pub fn new(event_bus: Arc<EventBus>) -> Result<Self, Error> {
+  pub fn new(event_bus: Arc<EventBus>) -> windows::core::Result<Self> {
+    println!("[MediaManager] new");
     let manager = GlobalSystemMediaTransportControlsSessionManager::RequestAsync()?.get()?;
 
     Ok(Self {
-      inner: Arc::new(InnerMediaManager {
-        manager,
-        session: Arc::new(Mutex::new(None)),
-      }),
+			manager,
+			session: Arc::new(Mutex::new(None)),
       event_bus,
     })
   }
 
-  pub fn get_session(&self) -> MutexGuard<'_, Option<Session>> { self.inner.get_session() }
-
-  pub fn arced(self) -> Arc<Self> { Arc::new(self) }
+  pub fn get_session(&self) -> MutexGuard<'_, Option<Session>> { self.session.lock().unwrap() }
 
   pub fn build(self) -> Self {
     println!("[MediaManager] build");
@@ -58,7 +38,8 @@ impl MediaManager {
       GlobalSystemMediaTransportControlsSessionManager,
       SessionsChangedEventArgs,
     >::new({
-      let inner = self.inner.clone();
+      // let inner = self.inner.clone();
+			let session = self.session.clone();
       let event_bus = self.event_bus.clone();
 
       move |sender, _| {
@@ -67,50 +48,47 @@ impl MediaManager {
 				};
 
         let Ok(sessions) = manager.GetSessions() else {
-					return Err(WindowsError::new(HRESULT(0), "Could not find a session.".into()));
+					return Ok(());
 				};
 
-        sessions
-          .borrow()
-          .into_iter()
-          .filter(has_spotify)
-          .for_each(|session| {
-            if inner.get_session().is_some() {
-              println!("session exists already");
-              return
-            }
-
-            inner.set_session(Some(Session::new(session, event_bus.clone()).build()));
-          });
-
-        let spotify_is_active = sessions
+        if let Some(active_session) = sessions
 					.borrow()
 					.into_iter()
-					.any(|s| has_spotify(&s));
+					.filter(has_spotify)
+					.collect::<Vec<GlobalSystemMediaTransportControlsSession>>()
+					.first() {
+						if session.lock().unwrap().as_ref().is_some() {
+							println!("session already exists");
+							return Ok(())
+						}
 
-        // If Spotify is not active, but the Session is. Emit 'Disconnect' event
-        if inner.get_session().is_some() && !spotify_is_active {
-          inner.get_session().as_ref().unwrap().disconnect();
-          inner.set_session(None);
-        }
+						*session.lock().unwrap() = Some(Session::new(active_session.clone(), event_bus.clone()).build());
+						return Ok(())
+					}
+					
+				// If Spotify is no longer active and 'session' is still allocated
+				// send disconnect event and deallocate
+				session.lock().unwrap().as_ref().unwrap().disconnect();
+				*session.lock().unwrap() = None;
 
         Ok(())
       }
     });
 
     self
-      .inner
       .manager
       .SessionsChanged(sessions_changed_handler)
       .unwrap();
 
-    /* Manually Invoke the handler to force check a session on startup */
+    // Manually Invoke the handler to force check a session on startup
     sessions_changed_handler
-      .Invoke(&self.inner.manager, None)
+      .Invoke(&self.manager, None)
       .unwrap();
 
     self
   }
+
+  pub fn arced(self) -> Arc<Self> { Arc::new(self) }
 }
 
 fn has_spotify(session: &GlobalSystemMediaTransportControlsSession) -> bool {

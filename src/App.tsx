@@ -46,11 +46,16 @@ function App() {
 			updateTheme(data.thumbnail.palette.shades, data.thumbnail.prominantColor);
 		}
 	});
-	rspc.useSubscription(['media.playbackInfoChanged'], { onData: setPlaybackData });
-	rspc.useSubscription(['media.timelinePropertiesChanged'], { onData: setTimelineData });
+	rspc.useSubscription(['media.playbackInfoChanged'], {
+		onData: setPlaybackData
+	});
+	rspc.useSubscription(['media.timelinePropertiesChanged'], {
+		onData: setTimelineData
+	});
 	rspc.useSubscription(['media.sessionChanged'], {
 		onData: (data) => {
-			if (!data.sessionActive) {
+			console.log(`session changed: ${data.appId}`);
+			if (data.appId === 'Spotify.exe' && !data.sessionActive) {
 				setMetadata(null);
 				setPlaybackData(null);
 				setTimelineData(null);
@@ -63,7 +68,9 @@ function App() {
 		invokeMediaProperties(undefined);
 	}, []);
 
-	const hasSession = !!metadata && !!playbackData && !!timelineData;
+	const hasSession = !!metadata && !!timelineData;
+
+	console.log({ metadata, playbackData, timelineData });
 
 	return (
 		<div
@@ -91,7 +98,7 @@ function App() {
 							<div className="flex h-full min-w-0 flex-1 flex-col">
 								{/* Metadata */}
 								<div className="flex-grow overflow-hidden text-theme-100">
-									<h1 className="-my-[5px] -mx-px truncate px-px text-base font-medium drop-shadow-sm">
+									<h1 className="-my-[6px] -mx-px truncate px-px text-base font-medium drop-shadow-sm">
 										{metadata?.title}
 									</h1>
 									<h2 className="truncate text-xs leading-5 opacity-90 drop-shadow-sm">
