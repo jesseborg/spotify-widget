@@ -51,7 +51,6 @@ pub(crate) fn media_router() -> RouterBuilder {
       t(|ctx, _input: ()| {
         async_stream::stream! {
           let mut event_bus = ctx.event_bus.0.subscribe();
-          println!("event_bus: {:?}", event_bus);
           while let Ok(event) = event_bus.recv().await {
             match &event {
               MediaEvent::Connect(app_id) => {
