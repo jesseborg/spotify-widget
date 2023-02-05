@@ -30,7 +30,7 @@ pub async fn get_thumbnail_data(
   match load_from_memory(bytes.as_bytes()) {
     Ok(mut image) => {
       /* Crop the Spotify watermark out of the image */
-      let image = image.crop(34, 1, 234, 234);
+      let image = image.crop(34, 1, 233, 233);
 
       /* Write the image to a buffer, which is then encoded into a base64 string */
       let mut buf = vec![];
