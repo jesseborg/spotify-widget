@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use tailwind_palette::TailwindPalette;
-use tokio::sync::broadcast::{Receiver, Sender};
+use tokio::sync::broadcast;
 
-pub type EventBus = (Sender<MediaEvent>, Receiver<MediaEvent>);
+pub type EventBus = (broadcast::Sender<MediaEvent>, broadcast::Receiver<MediaEvent>);
 
 #[derive(Debug, Serialize, PartialEq, Clone, rspc::Type)]
 #[serde(rename_all = "camelCase")]

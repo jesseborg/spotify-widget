@@ -2,15 +2,14 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use rspc::Config;
-use tokio::sync::broadcast::{Receiver, Sender};
 
 use super::media::media_router;
-use crate::media::lib::MediaEvent;
+use crate::media::lib::EventBus;
 use crate::media::manager::MediaManager;
 
 pub struct Ctx {
   pub manager: Arc<MediaManager>,
-  pub event_bus: Arc<(Sender<MediaEvent>, Receiver<MediaEvent>)>,
+  pub event_bus: Arc<EventBus>,
 }
 
 pub type Router = rspc::Router<Ctx>;
