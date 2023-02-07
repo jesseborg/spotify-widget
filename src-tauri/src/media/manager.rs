@@ -66,10 +66,12 @@ impl MediaManager {
 						return Ok(())
 					}
 					
-				// If Spotify is no longer active and 'session' is still allocated
-				// send disconnect event and deallocate
-				session.lock().unwrap().as_ref().unwrap().disconnect();
-				*session.lock().unwrap() = None;
+				if session.lock().unwrap().is_some() {
+					// If Spotify is no longer active and 'session' is still allocated
+					// send disconnect event and deallocate
+					session.lock().unwrap().as_ref().unwrap().disconnect();
+					*session.lock().unwrap() = None;
+				}
 
         Ok(())
       }

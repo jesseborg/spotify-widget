@@ -7,7 +7,8 @@ export type Procedures = {
         { key: "media.invokeMediaProperties", input: never, result: null } | 
         { key: "media.invokeMethod", input: Method, result: null } | 
         { key: "media.invokePlaybackInfo", input: never, result: null } | 
-        { key: "media.invokeTimelineProperties", input: never, result: null },
+        { key: "media.invokeTimelineProperties", input: never, result: null } | 
+        { key: "spotify.invokeUri", input: string, result: null },
     subscriptions: 
         { key: "media.mediaPropertiesChanged", input: never, result: MediaSessionData } | 
         { key: "media.playbackInfoChanged", input: never, result: MediaPlaybackData } | 
@@ -18,7 +19,7 @@ export type Procedures = {
 
 export interface MediaPlaybackData { isPlaying: boolean }
 
-export interface MediaSessionData { isPlayEnabled: boolean, isPauseEnabled: boolean, isPlayOrPauseEnabled: boolean, isPreviousEnabled: boolean, isNextEnabled: boolean, title: string, artist: string, thumbnail: ThumbnailData }
+export interface MediaSessionData { isPlayEnabled: boolean, isPauseEnabled: boolean, isPlayOrPauseEnabled: boolean, isPreviousEnabled: boolean, isNextEnabled: boolean, title: string, artist: string, album: string, thumbnail: ThumbnailData }
 
 export interface MediaTimelineData { timelineStartTime: number, timelineEndTime: number, timelinePosition: number }
 

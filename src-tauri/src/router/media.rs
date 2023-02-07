@@ -1,8 +1,9 @@
 use rspc::Type;
 use serde::{Deserialize, Serialize};
 
-use super::router::RouterBuilder;
 use crate::media::lib::MediaEvent;
+
+use super::RouterBuilder;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]

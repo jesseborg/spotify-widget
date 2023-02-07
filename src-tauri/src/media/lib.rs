@@ -47,5 +47,6 @@ pub struct MediaSessionData {
   pub is_next_enabled: bool,
   pub title: String,
   pub artist: String,
+	pub album: String,
   pub thumbnail: ThumbnailData,
 }

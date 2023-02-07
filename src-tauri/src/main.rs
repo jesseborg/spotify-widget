@@ -13,7 +13,7 @@ use crate::media::lib::MediaEvent;
 use crate::media::manager::MediaManager;
 
 mod router;
-use router::router::Ctx;
+use router::Ctx;
 
 mod utils;
 
@@ -22,7 +22,7 @@ async fn main() {
   let tray_menu = SystemTrayMenu::new()
 		.add_item(CustomMenuItem::new("quit", "Quit"));
 	
-	let router = router::router::new();
+	let router = router::new();
   let event_bus = Arc::new(broadcast::channel::<MediaEvent>(1024));
 	
   let manager = MediaManager::new(event_bus.clone())

@@ -117,6 +117,7 @@ impl Session {
               is_next_enabled: controls.IsNextEnabled().unwrap(),
               title: props.Title().unwrap().to_string(),
               artist: props.Artist().unwrap().to_string(),
+							album: props.AlbumTitle().unwrap().to_string(),
               thumbnail: ThumbnailData {
                 base64: thumbnail,
                 palette: shades.unwrap(),

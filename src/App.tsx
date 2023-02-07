@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 
 import { Thumbnail } from './components/Thumbnail';
 import { Timeline } from './components/Timeline';
@@ -8,6 +8,7 @@ import { MediaPlaybackData, MediaSessionData, MediaTimelineData } from './utils/
 import { clsx } from './utils/clsx';
 import { resetTheme, updateTheme } from './utils/color';
 import { rspc } from './utils/rspc';
+import { getTrackData, SpotifySearchResult } from './utils/spotify';
 import { tryAppendArtistFromTitle } from './utils/utils';
 
 const LoadingSkeleton = () => {
@@ -36,14 +37,19 @@ function App() {
 	const [playbackData, setPlaybackData] = useState<MediaPlaybackData | null>();
 	const [timelineData, setTimelineData] = useState<MediaTimelineData | null>();
 
+	const [trackData, setTrackData] = useState<SpotifySearchResult | null>();
+
 	const { mutate: invokeMediaProperties } = rspc.useMutation('media.invokeMediaProperties');
+	const { mutate: invokeSpotifyUri } = rspc.useMutation('spotify.invokeUri');
 
 	rspc.useSubscription(['media.mediaPropertiesChanged'], {
-		onData: (data) => {
+		onData: async (data) => {
 			console.log(data);
 
 			setMetadata({ ...data, artist: tryAppendArtistFromTitle(data.artist, data.title) });
 			updateTheme(data.thumbnail.palette.shades, data.thumbnail.prominantColor);
+
+			setTrackData(await getTrackData(data.title, data.artist, data.album));
 		}
 	});
 	rspc.useSubscription(['media.playbackInfoChanged'], {
@@ -64,13 +70,27 @@ function App() {
 		}
 	});
 
+	const handleTrackClick = (_: MouseEvent) => {
+		const albumUri = trackData?.tracks?.items[0]?.album.uri;
+		if (albumUri) {
+			invokeSpotifyUri(albumUri ?? '');
+		}
+	};
+
+	const handleArtistClick = (_: MouseEvent) => {
+		const artistUri = trackData?.tracks?.items[0]?.artists?.[0]?.uri;
+		if (artistUri) {
+			invokeSpotifyUri(artistUri ?? '');
+		}
+	};
+
 	useEffect(() => {
 		invokeMediaProperties(undefined);
 	}, []);
 
 	const hasSession = !!metadata && !!timelineData;
 
-	console.log({ metadata, playbackData, timelineData });
+	// console.log({ metadata, playbackData, timelineData });
 
 	return (
 		<div
@@ -98,10 +118,26 @@ function App() {
 							<div className="flex h-full min-w-0 flex-1 flex-col">
 								{/* Metadata */}
 								<div className="flex-grow overflow-hidden text-theme-100">
-									<h1 className="-my-[6px] -mx-px truncate px-px text-base font-medium drop-shadow-sm">
+									<h1
+										onClick={handleTrackClick}
+										className={clsx(
+											'pointer-events-auto -my-[6px] -mx-px w-fit max-w-full truncate px-px text-base font-medium drop-shadow-sm',
+											{
+												'hover:text-theme-50 hover:underline': Boolean(trackData)
+											}
+										)}
+									>
 										{metadata?.title}
 									</h1>
-									<h2 className="truncate text-xs leading-5 opacity-90 drop-shadow-sm">
+									<h2
+										onClick={handleArtistClick}
+										className={clsx(
+											'pointer-events-auto w-fit max-w-full truncate text-xs leading-5 opacity-90 drop-shadow-sm',
+											{
+												'hover:text-theme-50 hover:underline': Boolean(trackData)
+											}
+										)}
+									>
 										{metadata?.artist}
 									</h2>
 								</div>
