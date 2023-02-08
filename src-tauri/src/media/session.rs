@@ -2,7 +2,6 @@ use std::sync::{Arc, Mutex};
 
 use futures::Future;
 use tailwind_palette::TailwindPalette;
-use windows::core::{Error as WindowsError, HRESULT};
 use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
 use windows::Media::Control::{
   GlobalSystemMediaTransportControlsSession,
