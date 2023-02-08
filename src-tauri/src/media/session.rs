@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use futures::Future;
 use tailwind_palette::TailwindPalette;
 use windows::core::{Error as WindowsError, HRESULT};
 use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
@@ -25,9 +26,18 @@ use crate::utils::thumbnail::get_thumbnail_data;
 
 type ThreadSafeOption<T> = Arc<Mutex<Option<T>>>;
 
+// https://internals.rust-lang.org/t/return-type-annotation-of-async-block/12561/14
+trait Outputting: Sized {
+	fn outputting<O>(self) -> Self
+	where Self: Future<Output=O>
+	{
+		self
+	}
+}
+impl<T: Future> Outputting for T {}
+
 // #[derive(Debug)]
 pub struct Session {
-  pub app_id: String,
   controls: GlobalSystemMediaTransportControlsSession,
   media_properites_event_token: EventRegistrationToken,
   playback_info_event_token: EventRegistrationToken,
@@ -46,7 +56,6 @@ impl Session {
     println!("[MediaSession] new");
 
     Self {
-      app_id: controls.SourceAppUserModelId().unwrap().to_string(),
       controls,
       media_properites_event_token: EventRegistrationToken::default(),
       playback_info_event_token: EventRegistrationToken::default(),
@@ -72,65 +81,55 @@ impl Session {
 			self.invoke_timeline_properties_handler();
 
       move |sender, _args| {
-        match futures::executor::block_on(async {
-          let Some(session) = sender else {
-						return Ok::<(), windows::core::Error>(());
+        futures::executor::block_on(async {
+          let Some(sender) = sender else {
+						return Ok(())
 					};
+					
+					let props = sender.TryGetMediaPropertiesAsync()?.await?;
+					let playback = sender.GetPlaybackInfo()?;
+					let controls = playback.Controls()?;
 
-          let Ok(props) = session.TryGetMediaPropertiesAsync()?.await else {
-						return Ok(());
-					};
+					// Wait for thumbnail to be encoded
+					let (palette, base64) = get_thumbnail_data(props.Thumbnail())
+						.await
+						.unwrap_or((None, "".into()));
 
-          let Ok(playback) = session.GetPlaybackInfo() else {
-						return Ok(());
-					};
+					let (prominant_color, palette) = palette
+						.map(|palette| {
+							let (r, g, b) = palette.most_prominent_color().unwrap_or((245, 245, 245));
+							let tailwind_palette = TailwindPalette::new(format!("rgb({},{},{})", r, g, b).as_str());
+							
+							println!("RGB: {r} {g} {b}");
 
-          let Ok(controls) = playback.Controls() else {
-						return Ok(());
-					};
+							((r, g, b), tailwind_palette.unwrap())
+						})
+						.unwrap_or(((245, 245, 245), TailwindPalette::new("rgb(245,245,245)").unwrap()));
 
-          // Wait for thumbnail to be encoded
-          let (palette, thumbnail) =
-            get_thumbnail_data(props.Thumbnail()).await.unwrap_or((
-							None, "".into()
-						));
-
-					let (prominant_color, shades) = if let Some(palette) = palette {
-						let (r, g, b) = palette.most_prominent_color().unwrap_or((245, 245, 245));
-						println!("RGB: {r} {g} {b}");
-						let tailwind_palette = TailwindPalette::new(format!("rgb({},{},{})", r, g, b).as_str());
-
-						((r, g, b), tailwind_palette)
-					} else {
-						(
-							(245, 245, 245),
-							TailwindPalette::new("rgb(245,245,245)")
-						)
-					};
-
-          event_sender.send(MediaEvent::MediaPropertiesChanged(
-            MediaSessionData {
-              is_play_enabled: controls.IsPlayEnabled().unwrap(),
-              is_pause_enabled: controls.IsPauseEnabled().unwrap(),
-              is_play_or_pause_enabled: controls.IsPlayEnabled().unwrap() || controls.IsPauseEnabled().unwrap(),
-              is_previous_enabled: controls.IsPreviousEnabled().unwrap(),
-              is_next_enabled: controls.IsNextEnabled().unwrap(),
-              title: props.Title().unwrap().to_string(),
-              artist: props.Artist().unwrap().to_string(),
-							album: props.AlbumTitle().unwrap().to_string(),
-              thumbnail: ThumbnailData {
-                base64: thumbnail,
-                palette: shades.unwrap(),
+					event_sender.send(MediaEvent::MediaPropertiesChanged(
+						MediaSessionData {
+							is_play_enabled: controls.IsPlayEnabled()?,
+							is_pause_enabled: controls.IsPauseEnabled()?,
+							is_play_or_pause_enabled: controls.IsPlayEnabled()? || controls.IsPauseEnabled()?,
+							is_previous_enabled: controls.IsPreviousEnabled()?,
+							is_next_enabled: controls.IsNextEnabled()?,
+							title: props.Title()?.to_string(),
+							artist: props.Artist()?.to_string(),
+							album: props.AlbumTitle()?.to_string(),
+							thumbnail: ThumbnailData {
+								base64,
+								palette,
 								prominant_color
-              }
-            },
-          )).unwrap();
+							}
+						},
+					))?;
 
           Ok(())
-        }) {
-          Ok(()) => Ok(()),
-          Err(_) => Err(WindowsError::new(HRESULT(0), "".into())),
-        }
+        }.outputting::<anyhow::Result<(), anyhow::Error>>())
+					.map_err(|err| println!("[MediaSession] media_properties_handler | Error: {:?}", err))
+					.unwrap();
+
+				Ok(())
       }
     })
   }
@@ -148,18 +147,20 @@ impl Session {
 
       move |sender, _args| {
         futures::executor::block_on(async {
-					let Ok(playback_info) = sender.as_ref().unwrap().GetPlaybackInfo() else {
-						return Ok::<(), windows::core::Error>(());
+					let Some(sender) = sender else {
+						return Ok(())
 					};
 
+					let playback_info = sender.GetPlaybackInfo()?;
+					
 					event_sender.send(MediaEvent::PlaybackInfoChanged(
 						MediaPlaybackData {
-							is_playing: playback_info.PlaybackStatus().unwrap() == WindowsPlaybackStatus::Playing,
+							is_playing: playback_info.PlaybackStatus()? == WindowsPlaybackStatus::Playing,
 						}
-					)).unwrap();
+					))?;
 
 					Ok(())
-				}).unwrap();
+				}.outputting::<anyhow::Result<(), anyhow::Error>>()).unwrap();
 
         Ok(())
       }
@@ -181,9 +182,11 @@ impl Session {
 
       move |sender, _args| {
         futures::executor::block_on(async {
-					let Ok(timeline) = sender.as_ref().unwrap().GetTimelineProperties() else {
-						return Ok::<(), windows::core::Error>(());
+					let Some(sender) = sender else {
+						return Ok(());
 					};
+
+					let timeline = sender.GetTimelineProperties()?;
 
 					event_sender.send(MediaEvent::TimelinePropertiesChanged(
 						MediaTimelineData {
@@ -191,10 +194,10 @@ impl Session {
 							timeline_end_time: timeline.EndTime().unwrap().Duration as usize,
 							timeline_position: timeline.Position().unwrap().Duration as usize,
 						}
-					)).unwrap();
+					))?;
 
 					Ok(())
-				}).unwrap();
+				}.outputting::<anyhow::Result<(), anyhow::Error>>()).unwrap();
         Ok(())
       }
     })
@@ -224,13 +227,13 @@ impl Session {
       .unwrap();
   }
 
-  pub fn build(mut self) -> Self {
+  pub fn build(mut self) -> anyhow::Result<Self>  {
     println!("[MediaSession] build");
 
 		let audio_control = Arc::new(Mutex::new(None));
 		let audio_manager = AudioSessionManager::new()
 			.map(|mut audio_manager| {
-				let app_name = self.app_id.clone();
+				let app_name = self.controls.SourceAppUserModelId().unwrap().to_string();
 				let event_sender = self.event_bus.0.clone();
 				let audio_control = audio_control.clone();
 
@@ -269,50 +272,44 @@ impl Session {
 
     self.media_properites_event_token = self
       .controls
-      .MediaPropertiesChanged(&self.media_properties_handler())
-      .unwrap();
+      .MediaPropertiesChanged(&self.media_properties_handler())?;
 
     self.playback_info_event_token = self
       .controls
-      .PlaybackInfoChanged(&self.playback_info_handler())
-      .unwrap();
+      .PlaybackInfoChanged(&self.playback_info_handler())?;
 
     self.timeline_properties_event_token = self
       .controls
-      .TimelinePropertiesChanged(&self.timeline_properties_handler())
-      .unwrap();
+      .TimelinePropertiesChanged(&self.timeline_properties_handler())?;
 
     self
       .event_bus
       .0
-      .send(MediaEvent::Connect(self.app_id.to_owned()))
-      .unwrap();
+      .send(MediaEvent::Connect(self.controls.SourceAppUserModelId()?.to_string()))?;
 
-		self
+		Ok(self)
   }
 
   #[allow(dead_code)]
-  pub fn disconnect(&self) {
-    println!("[MediaSession] '{}' disconnected", self.app_id);
+  pub fn disconnect(&self) -> anyhow::Result<()> {
+    println!("[MediaSession] '{}' disconnected", self.controls.SourceAppUserModelId()?);
 
     self
       .controls
-      .RemoveMediaPropertiesChanged(self.media_properites_event_token)
-      .unwrap();
+      .RemoveMediaPropertiesChanged(self.media_properites_event_token)?;
     self
       .controls
-      .RemovePlaybackInfoChanged(self.playback_info_event_token)
-      .unwrap();
+      .RemovePlaybackInfoChanged(self.playback_info_event_token)?;
     self
       .controls
-      .RemoveTimelinePropertiesChanged(self.timeline_properties_event_token)
-      .unwrap();
+      .RemoveTimelinePropertiesChanged(self.timeline_properties_event_token)?;
 
     self
       .event_bus
       .0
-      .send(MediaEvent::Disconnect(self.app_id.to_owned()))
-      .unwrap();
+      .send(MediaEvent::Disconnect(self.controls.SourceAppUserModelId()?.to_string()))?;
+
+		Ok(())
   }
 
   pub fn play(&self) {

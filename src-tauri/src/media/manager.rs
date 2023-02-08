@@ -31,7 +31,7 @@ impl MediaManager {
 
   pub fn get_session(&self) -> MutexGuard<'_, Option<Session>> { self.session.lock().unwrap() }
 
-  pub fn build(self) -> Self {
+  pub fn build(self) -> anyhow::Result<Self> {
     println!("[MediaManager] build");
 
     let sessions_changed_handler = &TypedEventHandler::<
@@ -62,15 +62,19 @@ impl MediaManager {
 							return Ok(())
 						}
 
-						*session.lock().unwrap() = Some(Session::new(active_session.clone(), event_bus.clone()).build());
+						if let Ok(new_session) = Session::new(active_session.clone(), event_bus.clone()).build() {
+							*session.lock().unwrap() = Some(new_session);
+						}
 						return Ok(())
 					}
 					
-				if session.lock().unwrap().is_some() {
-					// If Spotify is no longer active and 'session' is still allocated
-					// send disconnect event and deallocate
-					session.lock().unwrap().as_ref().unwrap().disconnect();
-					*session.lock().unwrap() = None;
+				// If Spotify is no longer active and 'session' is still allocated
+				// send disconnect event and deallocate
+				if let Ok(mut session) = session.lock() {
+					if let Some(media_session) = session.as_ref() {
+						media_session.disconnect().unwrap();
+						*session = None;
+					}
 				}
 
         Ok(())
@@ -79,15 +83,13 @@ impl MediaManager {
 
     self
       .manager
-      .SessionsChanged(sessions_changed_handler)
-      .unwrap();
+      .SessionsChanged(sessions_changed_handler)?;
 
     // Manually Invoke the handler to force check a session on startup
     sessions_changed_handler
-      .Invoke(&self.manager, None)
-      .unwrap();
+      .Invoke(&self.manager, None)?;
 
-    self
+    Ok(self)
   }
 
   pub fn arced(self) -> Arc<Self> { Arc::new(self) }

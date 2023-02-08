@@ -18,16 +18,15 @@ use router::Ctx;
 mod utils;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
   let tray_menu = SystemTrayMenu::new()
 		.add_item(CustomMenuItem::new("quit", "Quit"));
 	
 	let router = router::new();
   let event_bus = Arc::new(broadcast::channel::<MediaEvent>(1024));
 	
-  let manager = MediaManager::new(event_bus.clone())
-    .unwrap()
-    .build()
+  let manager = MediaManager::new(event_bus.clone())?
+    .build()?
     .arced();
 
   tauri::Builder::default()
@@ -53,4 +52,6 @@ async fn main() {
     })
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
+
+	Ok(())
 }
