@@ -1,7 +1,8 @@
-import { MouseEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Thumbnail } from './components/Thumbnail';
 import { Timeline } from './components/Timeline';
+import { UriLink } from './components/UriLink';
 import { VolumeSlider, VolumeSliderSkeletonLoader } from './components/VolumeSlider';
 
 import { MediaPlaybackData, MediaSessionData, MediaTimelineData } from './utils/bindings';
@@ -40,7 +41,6 @@ function App() {
 	const [trackData, setTrackData] = useState<SpotifySearchResult | null>();
 
 	const { mutate: invokeMediaProperties } = rspc.useMutation('media.invokeMediaProperties');
-	const { mutate: invokeSpotifyUri } = rspc.useMutation('spotify.invokeUri');
 
 	rspc.useSubscription(['media.mediaPropertiesChanged'], {
 		onData: async (data) => {
@@ -70,27 +70,11 @@ function App() {
 		}
 	});
 
-	const handleTrackClick = (_: MouseEvent) => {
-		const albumUri = trackData?.tracks?.items[0]?.album.uri;
-		if (albumUri) {
-			invokeSpotifyUri(albumUri ?? '');
-		}
-	};
-
-	const handleArtistClick = (_: MouseEvent) => {
-		const artistUri = trackData?.tracks?.items[0]?.artists?.[0]?.uri;
-		if (artistUri) {
-			invokeSpotifyUri(artistUri ?? '');
-		}
-	};
-
 	useEffect(() => {
 		invokeMediaProperties(undefined);
 	}, []);
 
-	const hasSession = !!metadata && !!timelineData;
-
-	// console.log({ metadata, playbackData, timelineData });
+	const hasSession = !!metadata && !!playbackData && !!timelineData;
 
 	return (
 		<div
@@ -118,28 +102,18 @@ function App() {
 							<div className="flex h-full min-w-0 flex-1 flex-col">
 								{/* Metadata */}
 								<div className="flex-grow overflow-hidden text-theme-100">
-									<h1
-										onClick={handleTrackClick}
-										className={clsx(
-											'pointer-events-auto -my-[6px] -mx-px w-fit max-w-full truncate px-px text-base font-medium drop-shadow-sm',
-											{
-												'hover:text-theme-50 hover:underline': Boolean(trackData)
-											}
-										)}
+									<UriLink
+										className="-my-[6px] -mx-px px-px text-base font-medium"
+										uri={trackData?.tracks?.items[0]?.album.uri ?? ''}
 									>
-										{metadata?.title}
-									</h1>
-									<h2
-										onClick={handleArtistClick}
-										className={clsx(
-											'pointer-events-auto w-fit max-w-full truncate text-xs leading-5 opacity-90 drop-shadow-sm',
-											{
-												'hover:text-theme-50 hover:underline': Boolean(trackData)
-											}
-										)}
+										{metadata.title}
+									</UriLink>
+									<UriLink
+										className="text-xs leading-5 opacity-90"
+										uri={trackData?.tracks?.items[0]?.artists?.[0]?.uri ?? ''}
 									>
-										{metadata?.artist}
-									</h2>
+										{metadata.artist}
+									</UriLink>
 								</div>
 
 								<div className="pointer-events-auto relative">
