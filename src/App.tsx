@@ -84,7 +84,7 @@ function App() {
 		<div
 			data-tauri-drag-region
 			className={clsx(
-				'h-screen w-full select-none overflow-hidden rounded-[calc(6px+2px)] border border-theme-700 bg-theme-800/80 p-[2px] font-satoshi text-theme-200 transition-colors',
+				'h-screen w-full select-none overflow-hidden rounded-[calc(6px+2px)] border border-theme-700/80 bg-theme-800/80 p-[2px] font-satoshi text-theme-200 transition-colors',
 				{
 					'border-theme-500/20 bg-theme-100/80': !hasSession
 				}

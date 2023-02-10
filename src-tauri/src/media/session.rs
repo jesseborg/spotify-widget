@@ -100,10 +100,10 @@ impl Session {
 						.map(|palette| palette.most_prominent_color().unwrap_or((92,80,160)))
 						.unwrap_or((92,80,160));
 
-					let palette = average_color
+					let palette = Some(prominant_color)
 						.as_ref()
-						.map(|color| {
-							TailwindPalette::new(format!("rgb({},{},{})", color.r, color.g, color.b).as_str()).unwrap()
+						.map(|(r, g, b)| {
+							TailwindPalette::new(format!("rgb({},{},{})", r, g, b).as_str()).unwrap()
 						})
 						.unwrap_or(TailwindPalette::new("rgb(92,80,160)").unwrap());
 
