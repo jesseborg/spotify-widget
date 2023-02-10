@@ -1779,6 +1779,7 @@ dependencies = [
  "base64 0.20.0",
  "contrast",
  "futures",
+ "online",
  "prominence",
  "rspc",
  "serde",
@@ -2039,6 +2040,12 @@ name = "once_cell"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f61fba1741ea2b3d6a1e3178721804bb716a68a6aeba1149b5d52e3d464ea66"
+
+[[package]]
+name = "online"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92f3da77f57f551a8f50567bf3c2b2883716d7b1ded55ee3f5e0d1ad549df56b"
 
 [[package]]
 name = "open"

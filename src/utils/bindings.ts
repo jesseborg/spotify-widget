@@ -2,7 +2,8 @@
 
 export type Procedures = {
     queries: 
-        { key: "media.getVolume", input: never, result: number },
+        { key: "media.getVolume", input: never, result: number } | 
+        { key: "network.status", input: never, result: boolean },
     mutations: 
         { key: "media.invokeMediaProperties", input: never, result: null } | 
         { key: "media.invokeMethod", input: Method, result: null } | 

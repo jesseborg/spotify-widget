@@ -1,11 +1,13 @@
 pub mod media;
 pub mod spotify;
+pub mod network;
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use rspc::Config;
 
+use self::network::network_router;
 use self::spotify::spotify_router;
 use self::media::media_router;
 use crate::media::lib::EventBus;
@@ -27,6 +29,7 @@ pub(crate) fn new() -> Arc<Router> {
     ))
     .merge("media.", media_router())
     .merge("spotify.", spotify_router())
+    .merge("network.", network_router())
     .build()
     .arced()
 }

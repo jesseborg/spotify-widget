@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 
 vite.config.ts.timestamp*
+src-tauri/average-color/

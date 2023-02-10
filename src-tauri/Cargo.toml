@@ -30,6 +30,7 @@ tailwind-palette = { path = '../../tailwind-palette' }
 windows-volume-mixer = { path = '../../windows-volume-mixer' }
 average_color = { path = "./average-color" }
 contrast = "0.1.0"
+online = "4.0.0"
 
 [dependencies.windows]
 	version = "0.44.0"
