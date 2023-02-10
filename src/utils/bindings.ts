@@ -31,4 +31,4 @@ export interface TailwindPalette { shades: Array<TailwindShade> }
 
 export interface TailwindShade { number: string, hexcode: string, rgb: [number, number, number] }
 
-export interface ThumbnailData { base64: string, palette: TailwindPalette, prominantColor: [number, number, number] }
+export interface ThumbnailData { base64: string, palette: TailwindPalette, prominantColor: [number, number, number], averageColor: [number, number, number] }

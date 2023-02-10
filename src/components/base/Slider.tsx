@@ -26,14 +26,14 @@ export const Slider = forwardRef<HTMLSpanElement, RadixSlider.SliderProps>(
 				{...props}
 			>
 				<RadixSlider.Track
-					className={clsx('relative flex-grow rounded-full bg-theme-200/50', {
+					className={clsx('relative flex-grow rounded-full bg-theme-300/50', {
 						'h-1': isHorizontal,
 						'w-1': !isHorizontal
 					})}
 				>
 					<RadixSlider.Range
 						className={clsx(
-							'absolute rounded-full bg-theme-200 transition-colors group-focus-within:bg-theme-100 group-hover:bg-theme-100',
+							'absolute rounded-full bg-theme-300 transition-colors group-focus-within:bg-theme-100 group-hover:bg-theme-100',
 							{
 								'h-full': isHorizontal,
 								'w-full': !isHorizontal

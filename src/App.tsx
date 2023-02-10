@@ -47,7 +47,11 @@ function App() {
 			console.log(data);
 
 			setMetadata({ ...data, artist: tryAppendArtistFromTitle(data.artist, data.title) });
-			updateTheme(data.thumbnail.palette.shades, data.thumbnail.prominantColor);
+			updateTheme(
+				data.thumbnail.palette.shades,
+				data.thumbnail.prominantColor,
+				data.thumbnail.averageColor
+			);
 
 			setTrackData(await getTrackData(data.title, data.artist, data.album));
 		}
@@ -80,7 +84,7 @@ function App() {
 		<div
 			data-tauri-drag-region
 			className={clsx(
-				'h-screen w-full select-none overflow-hidden rounded-[calc(6px+2px)] border border-theme-900/20 bg-theme-prominant/80 p-[2px] font-satoshi text-theme-prominant transition-colors',
+				'h-screen w-full select-none overflow-hidden rounded-[calc(6px+2px)] border border-theme-700 bg-theme-800/80 p-[2px] font-satoshi text-theme-200 transition-colors',
 				{
 					'border-theme-500/20 bg-theme-100/80': !hasSession
 				}
@@ -101,7 +105,7 @@ function App() {
 						<>
 							<div className="flex h-full min-w-0 flex-1 flex-col">
 								{/* Metadata */}
-								<div className="flex-grow overflow-hidden text-theme-100">
+								<div className="flex-grow overflow-hidden">
 									<UriLink
 										className="-my-[6px] -mx-px px-px text-base font-medium"
 										uri={trackData?.tracks?.items[0]?.album.uri ?? ''}
@@ -116,7 +120,7 @@ function App() {
 									</UriLink>
 								</div>
 
-								<div className="pointer-events-auto relative">
+								<div className="relative">
 									<Timeline data={timelineData} isPlaying={playbackData?.isPlaying} />
 								</div>
 							</div>

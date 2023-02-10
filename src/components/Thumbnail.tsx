@@ -86,7 +86,7 @@ export const Thumbnail: FC<Props> = ({ src, loading = true, isPlaying = false })
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			className={clsx(
-				'group pointer-events-auto relative z-0 h-full w-[78px] self-center overflow-hidden rounded-md border border-theme-prominant',
+				'group pointer-events-auto relative z-0 h-full w-[78px] self-center overflow-hidden rounded-md border border-theme-700',
 				{
 					'border-none': loading || !hasThumbnail
 				}
@@ -99,14 +99,14 @@ export const Thumbnail: FC<Props> = ({ src, loading = true, isPlaying = false })
 				<div
 					onAnimationEnd={handleAnimationEnd}
 					className={clsx(
-						'absolute left-0 bottom-0 z-10 flex h-[45%] w-full translate-y-full items-end justify-center transition-transform',
+						'absolute left-0 bottom-0 z-10 flex w-full translate-y-full items-center justify-center bg-gradient-to-b from-transparent via-theme-700/80 to-theme-800 py-1 pt-2 transition-transform',
 						{
 							'animate-slide-in': showSlideIn,
 							'animate-slide-out': showSlideOut
 						}
 					)}
 				>
-					<div className="flex p-1">
+					<div className="flex">
 						<Button
 							tabIndex={-1}
 							icon={<PreviousIcon />}
@@ -123,8 +123,24 @@ export const Thumbnail: FC<Props> = ({ src, loading = true, isPlaying = false })
 						)}
 						<Button tabIndex={-1} icon={<NextIcon />} onClick={() => invokeMediaMethod('next')} />
 					</div>
-
-					<span className="fixed inset-0 z-0 h-full bg-gradient-to-b from-transparent to-theme-800 transition-opacity" />
+					{/* <div className="flex p-1">
+						<Button
+							tabIndex={-1}
+							icon={<PreviousIcon />}
+							onClick={() => invokeMediaMethod('previous')}
+						/>
+						{isPlaying ? (
+							<Button
+								tabIndex={-1}
+								icon={<PauseIcon />}
+								onClick={() => invokeMediaMethod('pause')}
+							/>
+						) : (
+							<Button tabIndex={-1} icon={<PlayIcon />} onClick={() => invokeMediaMethod('play')} />
+						)}
+						<Button tabIndex={-1} icon={<NextIcon />} onClick={() => invokeMediaMethod('next')} />
+					</div> */}
+					{/* <span className="fixed inset-0 z-0 h-full bg-gradient-to-b from-transparent to-theme-800 transition-opacity" /> */}
 				</div>
 			)}
 		</div>

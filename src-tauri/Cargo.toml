@@ -6,24 +6,30 @@ authors = ["Jesse B."]
 edition = "2021"
 rust-version = "1.57"
 
+[workspace]
+members = [
+	"average-color"
+]
+
 [build-dependencies]
 tauri-build = { version = "1.2", features = [] }
 
 [dependencies]
-serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.2", features = ["api-all", "system-tray"] }
-window-vibrancy = "0.3.2"
 tokio = { version = "1.23.0", features = ["full"] }
 rspc = { version = "0.1.2", features = ["tauri"] }
+serde_json = "1.0"
+window-vibrancy = "0.3.2"
 futures = "0.3.25"
-image = "0.24.5"
 base64 = "0.20.0"
-tailwind-palette = { path = '../../tailwind-palette' }
-windows-volume-mixer = { path = '../../windows-volume-mixer' }
 prominence = "0.1.0"
 async-stream = "0.3.3"
 anyhow = "1.0.69"
+tailwind-palette = { path = '../../tailwind-palette' }
+windows-volume-mixer = { path = '../../windows-volume-mixer' }
+average_color = { path = "./average-color" }
+contrast = "0.1.0"
 
 [dependencies.windows]
 	version = "0.44.0"

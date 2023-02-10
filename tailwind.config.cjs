@@ -18,7 +18,8 @@ module.exports = {
 					700: 'rgb(var(--theme-700) / <alpha-value>)',
 					800: 'rgb(var(--theme-800) / <alpha-value>)',
 					900: 'rgb(var(--theme-900) / <alpha-value>)',
-					prominant: 'rgb(var(--theme-prominant) / <alpha-value>)'
+					prominant: 'rgb(var(--theme-prominant) / <alpha-value>)',
+					average: 'rgb(var(--theme-average) / <alpha-value>)'
 				},
 				spotify: {
 					green: '#1ed760',

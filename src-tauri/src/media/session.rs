@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use average_color::enums::Rgb;
 use futures::Future;
 use tailwind_palette::TailwindPalette;
 use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
@@ -90,20 +91,26 @@ impl Session {
 					let controls = playback.Controls()?;
 
 					// Wait for thumbnail to be encoded
-					let (palette, base64) = get_thumbnail_data(props.Thumbnail())
+					let (thumbnail_palette, average_color, base64) = get_thumbnail_data(props.Thumbnail())
 						.await
-						.unwrap_or((None, "".into()));
+						.unwrap_or((None, None, "".into()));
 
-					let (prominant_color, palette) = palette
-						.map(|palette| {
-							let (r, g, b) = palette.most_prominent_color().unwrap_or((245, 245, 245));
-							let tailwind_palette = TailwindPalette::new(format!("rgb({},{},{})", r, g, b).as_str());
-							
-							println!("RGB: {r} {g} {b}");
+					let prominant_color = thumbnail_palette
+						.as_ref()
+						.map(|palette| palette.most_prominent_color().unwrap_or((92,80,160)))
+						.unwrap_or((92,80,160));
 
-							((r, g, b), tailwind_palette.unwrap())
+					let palette = average_color
+						.as_ref()
+						.map(|color| {
+							TailwindPalette::new(format!("rgb({},{},{})", color.r, color.g, color.b).as_str()).unwrap()
 						})
-						.unwrap_or(((245, 245, 245), TailwindPalette::new("rgb(245,245,245)").unwrap()));
+						.unwrap_or(TailwindPalette::new("rgb(92,80,160)").unwrap());
+
+					let average_color = average_color
+						.as_ref()
+						.map(|a| (a.r, a.g, a.b))
+						.unwrap_or((92,80,160));
 
 					event_sender.send(MediaEvent::MediaPropertiesChanged(
 						MediaSessionData {
@@ -118,7 +125,8 @@ impl Session {
 							thumbnail: ThumbnailData {
 								base64,
 								palette,
-								prominant_color
+								prominant_color,
+								average_color,
 							}
 						},
 					))?;

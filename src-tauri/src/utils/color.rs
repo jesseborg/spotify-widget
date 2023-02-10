@@ -1,7 +1,6 @@
 // Source: https://github.com/Spanfile/Prominence/blob/master/examples/filter.rs
 
-use image::DynamicImage;
-use prominence::{Filter, Palette};
+use prominence::{Filter, Palette, image::DynamicImage, PaletteBuilder};
 
 const BLACK_MAX_LIGHTNESS: f32 = 0.02; // 0.02
 const WHITE_MIN_LIGHTNESS: f32 = 0.90; // 0.90
@@ -19,7 +18,7 @@ fn is_black(l: f32) -> bool { l <= BLACK_MAX_LIGHTNESS }
 fn is_white(l: f32) -> bool { l >= WHITE_MIN_LIGHTNESS }
 
 pub(crate) fn get_color_palette(image: &DynamicImage) -> Palette {
-  prominence::PaletteBuilder::from_image(image.to_rgb8())
+  PaletteBuilder::from_image(image.to_rgba8())
     .clear_filters() // remove the default filter
     .add_filter(CustomFilter) // add our custom filter
     .generate()

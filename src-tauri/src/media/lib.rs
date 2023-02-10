@@ -1,3 +1,4 @@
+use prominence::Swatch;
 use serde::{Deserialize, Serialize};
 use tailwind_palette::TailwindPalette;
 use tokio::sync::broadcast;
@@ -35,6 +36,7 @@ pub struct ThumbnailData {
   pub base64: String,
   pub palette: TailwindPalette,
   pub prominant_color: (u8, u8, u8),
+	pub average_color: (u8, u8, u8),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, rspc::Type)]

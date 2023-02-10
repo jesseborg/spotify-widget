@@ -24,8 +24,8 @@ export const UriLink: FC<
 	return (
 		<h1
 			onClick={handleClick}
-			className={clsx('pointer-events-auto w-fit max-w-full truncate drop-shadow-sm', className, {
-				'hover:text-theme-50 hover:underline': hasValidUri
+			className={clsx('pointer-events-none w-fit max-w-full truncate', className, {
+				'pointer-events-auto hover:text-theme-100 hover:underline': hasValidUri
 			})}
 		>
 			{children}

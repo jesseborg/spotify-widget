@@ -1,7 +1,8 @@
 use std::io::Cursor;
 
-use image::{load_from_memory, EncodableLayout, ImageOutputFormat};
+use average_color::{calculate_average, AverageColor};
 use prominence::Palette;
+use prominence::image::{EncodableLayout, ImageOutputFormat, load_from_memory};
 use windows::core::{Error as WindowsError, HRESULT};
 use windows::Security::Cryptography::CryptographicBuffer;
 use windows::Storage::Streams::{Buffer, IRandomAccessStreamReference, InputStreamOptions};
@@ -10,7 +11,7 @@ use crate::utils::color::get_color_palette;
 
 pub async fn get_thumbnail_data(
   stream_reference: Result<IRandomAccessStreamReference, WindowsError>,
-) -> windows::core::Result<(Option<Palette>, String)> {
+) -> windows::core::Result<(Option<Palette>, AverageColor, String)> {
   println!("get_thumbnail_base64");
 
   let stream = stream_reference?.OpenReadAsync()?.await?;
@@ -38,7 +39,11 @@ pub async fn get_thumbnail_data(
         .write_to(&mut Cursor::new(&mut buf), ImageOutputFormat::Png)
         .unwrap();
 
-      Ok((Some(get_color_palette(&image)), base64::encode(&buf)))
+      Ok((
+				Some(get_color_palette(&image)),
+				calculate_average(&image),
+				base64::encode(&buf)
+			))
     },
     Err(_) => Err(WindowsError::new(
       HRESULT(1),

@@ -13,7 +13,7 @@ export const Button: FC<Props & ButtonHTMLAttributes<HTMLButtonElement>> = ({
 	return (
 		<button
 			className={clsx(
-				'z-10 flex h-5 w-5 cursor-default flex-col items-center justify-center fill-theme-300 outline-none transition-colors hover:fill-theme-50',
+				'z-10 flex h-5 w-5 cursor-default flex-col items-center justify-center fill-theme-200 outline-none transition-colors hover:fill-theme-50',
 				className
 			)}
 			type="button"

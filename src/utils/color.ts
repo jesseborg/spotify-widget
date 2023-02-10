@@ -16,7 +16,8 @@ export const defaultShades = [
 
 export const updateTheme = (
 	shades: Array<TailwindShade> = defaultShades,
-	prominantColor: [number, number, number] = [255, 255, 255]
+	prominantColor: [number, number, number] = [255, 255, 255],
+	averageColor: [number, number, number] = [255, 255, 255]
 ) => {
 	shades.map(({ rgb, number }) => {
 		document.documentElement.style.setProperty(
@@ -28,6 +29,10 @@ export const updateTheme = (
 	document.documentElement.style.setProperty(
 		'--theme-prominant',
 		`${prominantColor[0]} ${prominantColor[1]} ${prominantColor[2]}`
+	);
+	document.documentElement.style.setProperty(
+		'--theme-average',
+		`${averageColor[0]} ${averageColor[1]} ${averageColor[2]}`
 	);
 };
 
