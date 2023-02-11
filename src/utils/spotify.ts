@@ -123,16 +123,27 @@ export async function makeRequest<T>(endpoint: string) {
 	return data;
 }
 
-export async function getTrackData(track: string, artist: string, album?: string) {
+export async function getTrackData(track: string, artist: string, album: string) {
 	if (!track || !artist) {
 		return null;
 	}
 
 	const data = await makeRequest<SpotifySearchResult>(
-		`search?q=track:${track}+artist:${artist}+album:${album}&type=track`
+		`search?q=track:\"${sanitize(track)}\"+artist:\"${sanitize(artist)}\"+album:\"${sanitize(
+			album
+		)}\"&type=track&limit=1`
 	);
 
 	console.log(data);
 
 	return data;
+}
+
+// Tauri fetch API encodes the URI and the Spotify API
+// does not like when the special chars are encoded
+function sanitize(input: string) {
+	if (!input.length) {
+		return input;
+	}
+	return input.replace(/[!#$&'()*+,/:;=?@[\]]/g, '');
 }
