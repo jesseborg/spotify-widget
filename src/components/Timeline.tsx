@@ -1,4 +1,4 @@
-import { FC, HTMLAttributes, useEffect, useState } from 'react';
+import { FC, HTMLAttributes, KeyboardEvent, useEffect, useState } from 'react';
 import { MediaTimelineData } from '../utils/bindings';
 import { clsx } from '../utils/clsx';
 import { rspc } from '../utils/rspc';
@@ -43,18 +43,42 @@ export const Timeline: FC<TimelineProps> = ({ data }) => {
 	const timelinePositionPercent = (sliderPosition / timelineEndTime) * 100;
 
 	const [isDragging, setIsDragging] = useState(false);
+	const [timeSinceLastKey, setTimeSinceLastKey] = useState(0);
 
 	const handleValueChange = (value: number) => {
 		setIsDragging(true);
 		setSliderPosition(value);
 	};
 
-	const handleValueCommit = async (value: number) => {
-		setIsDragging(false);
+	const commitValue = async (value: number, invoke = true) => {
 		setSliderPosition(value);
 		setTimelinePosition(value);
 
-		await invokeMethod({ setPlaybackPosition: value });
+		if (invoke) {
+			setIsDragging(false);
+			await invokeMethod({ setPlaybackPosition: value });
+		}
+	};
+
+	const handleValueCommit = async (value: number) => {
+		commitValue(value);
+	};
+
+	const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+		if (Date.now() - timeSinceLastKey < 100) {
+			event.preventDefault();
+			return;
+		}
+
+		if (event.key === 'Escape' && isDragging) {
+			commitValue(timelinePosition, false);
+		}
+
+		setTimeSinceLastKey(Date.now());
+	};
+
+	const handleKeyUp = (_: KeyboardEvent<HTMLSpanElement>) => {
+		setIsDragging(false);
 	};
 
 	useEffect(() => {
@@ -62,7 +86,7 @@ export const Timeline: FC<TimelineProps> = ({ data }) => {
 	}, [data?.timelinePosition]);
 
 	return (
-		<div className="pointer-events-auto flex flex-1 flex-col gap-1 text-[10px] text-theme-100">
+		<div className="flex flex-1 flex-col gap-1 text-[10px]">
 			<div className="flex h-[10px] items-center">
 				<FormattedTime
 					value={timelinePosition}
@@ -74,7 +98,7 @@ export const Timeline: FC<TimelineProps> = ({ data }) => {
 					hide={isDragging && timelinePositionPercent >= 90}
 				/>
 			</div>
-			<span className="flex h-1 items-center">
+			<span className="pointer-events-auto flex h-1 items-center">
 				<FormattedTime
 					style={{
 						left: `${timelinePositionPercent}%`,
@@ -89,8 +113,11 @@ export const Timeline: FC<TimelineProps> = ({ data }) => {
 				<Slider
 					value={[isDragging ? sliderPosition : timelinePosition]}
 					max={timelineEndTime}
+					step={10000000}
 					onValueChange={([value]) => handleValueChange(value)}
 					onValueCommit={([value]) => handleValueCommit(value)}
+					onKeyDown={handleKeyDown}
+					onKeyUp={handleKeyUp}
 				/>
 			</span>
 		</div>

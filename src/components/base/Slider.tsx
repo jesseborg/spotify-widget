@@ -10,6 +10,7 @@ export const Slider = forwardRef<HTMLSpanElement, RadixSlider.SliderProps>(
 		return (
 			<RadixSlider.Slider
 				ref={forwardedRef}
+				aria-label="Slider"
 				orientation={orientation}
 				className={clsx(
 					'group relative flex touch-none select-none items-center [&_span]:transition-all [&_span]:hover:active:transition-none',
@@ -21,8 +22,7 @@ export const Slider = forwardRef<HTMLSpanElement, RadixSlider.SliderProps>(
 				)}
 				max={props.max ?? 100}
 				step={1}
-				aria-label="Slider"
-				defaultValue={value}
+				value={value}
 				{...props}
 			>
 				<RadixSlider.Track
