@@ -322,32 +322,32 @@ impl Session {
   }
 
   pub fn play(&self) {
-    println!("tried to play");
+    // println!("tried to play");
     self.controls.TryPlayAsync().unwrap();
   }
 
   pub fn pause(&self) {
-    println!("tried to pause");
+    // println!("tried to pause");
     self.controls.TryPauseAsync().unwrap();
   }
 
   pub fn skip_next(&self) {
-    println!("tried to skip next");
+    // println!("tried to skip next");
     self.controls.TrySkipNextAsync().unwrap();
   }
 
   pub fn skip_previous(&self) {
-    println!("tried to skip previous");
+    // println!("tried to skip previous");
     self.controls.TrySkipPreviousAsync().unwrap();
   }
 
   pub fn set_playback_position(&self, value: i64) {
-    println!("tried to set playback position: {}", value);
+    // println!("tried to set playback position: {}", value);
     self.controls.TryChangePlaybackPositionAsync(value).unwrap();
   }
 
   pub fn get_volume(&self) -> f32 {
-    println!("tried to get volume");
+    // println!("tried to get volume");
 
 		if let Some(session) = self.audio_control.lock().unwrap().as_ref() {
 			return session.volume_control().get_volume()
@@ -357,7 +357,7 @@ impl Session {
   }
 
   pub fn set_volume(&self, volume: f32) {
-    println!("tried to set volume: {volume}");
+    // println!("tried to set volume: {volume}");
 
 		if let Some(session) = self.audio_control.lock().unwrap().as_ref() {
 			session.volume_control().set_volume(volume).unwrap();
