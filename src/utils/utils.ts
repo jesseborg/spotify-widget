@@ -1,9 +1,4 @@
-export const tryAppendArtistFromTitle = (artist: string, title: string) => {
-	const matches = title.match(/[([](?:(f|F)eat\.|ft\.|with|w\/|&|and|,)\s(?<names>.+)[)\]]/);
-
-	if (matches?.groups?.names) {
-		return `${artist}, ${matches?.groups?.names}`;
-	}
-
-	return artist;
-};
+import { SpotifySearchResult } from './spotify';
+export function getArtistInfo(name: string, data?: SpotifySearchResult | null) {
+	return data?.tracks.items?.[0].artists.find((artist) => artist.name === name);
+}

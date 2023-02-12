@@ -128,15 +128,11 @@ export async function getTrackData(track: string, artist: string, album: string)
 		return null;
 	}
 
-	const data = await makeRequest<SpotifySearchResult>(
+	return await makeRequest<SpotifySearchResult>(
 		`search?q=track:\"${sanitize(track)}\"+artist:\"${sanitize(artist)}\"+album:\"${sanitize(
 			album
 		)}\"&type=track&limit=1`
 	);
-
-	console.log(data);
-
-	return data;
 }
 
 // Tauri fetch API encodes the URI and the Spotify API

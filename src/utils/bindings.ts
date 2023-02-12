@@ -20,7 +20,7 @@ export type Procedures = {
 
 export interface MediaPlaybackData { isPlaying: boolean }
 
-export interface MediaSessionData { isPlayEnabled: boolean, isPauseEnabled: boolean, isPlayOrPauseEnabled: boolean, isPreviousEnabled: boolean, isNextEnabled: boolean, title: string, artist: string, album: string, thumbnail: ThumbnailData }
+export interface MediaSessionData { isPlayEnabled: boolean, isPauseEnabled: boolean, isPlayOrPauseEnabled: boolean, isPreviousEnabled: boolean, isNextEnabled: boolean, title: string, artists: Array<string>, album: string, thumbnail: ThumbnailData }
 
 export interface MediaTimelineData { timelineStartTime: number, timelineEndTime: number, timelinePosition: number }
 

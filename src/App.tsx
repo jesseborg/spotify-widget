@@ -10,7 +10,7 @@ import { clsx } from './utils/clsx';
 import { resetTheme, updateTheme } from './utils/color';
 import { rspc } from './utils/rspc';
 import { getTrackData, SpotifySearchResult } from './utils/spotify';
-import { tryAppendArtistFromTitle } from './utils/utils';
+import { getArtistInfo } from './utils/utils';
 
 const LoadingSkeleton = () => {
 	return (
@@ -44,27 +44,19 @@ function App() {
 
 	rspc.useSubscription(['media.mediaPropertiesChanged'], {
 		onData: async (data) => {
-			console.log(data);
-
-			setMetadata({ ...data, artist: tryAppendArtistFromTitle(data.artist, data.title) });
+			setMetadata(data);
+			setTrackData(await getTrackData(data.title, data.artists[0], data.album));
 			updateTheme(
 				data.thumbnail.palette.shades,
 				data.thumbnail.prominantColor,
 				data.thumbnail.averageColor
 			);
-
-			setTrackData(await getTrackData(data.title, data.artist, data.album));
 		}
 	});
-	rspc.useSubscription(['media.playbackInfoChanged'], {
-		onData: setPlaybackData
-	});
-	rspc.useSubscription(['media.timelinePropertiesChanged'], {
-		onData: setTimelineData
-	});
+	rspc.useSubscription(['media.playbackInfoChanged'], { onData: setPlaybackData });
+	rspc.useSubscription(['media.timelinePropertiesChanged'], { onData: setTimelineData });
 	rspc.useSubscription(['media.sessionChanged'], {
 		onData: (data) => {
-			console.log(`session changed: ${data.appId}`);
 			if (data.appId === 'Spotify.exe' && !data.sessionActive) {
 				setMetadata(null);
 				setPlaybackData(null);
@@ -106,18 +98,25 @@ function App() {
 							<div className="flex h-full min-w-0 flex-1 flex-col">
 								{/* Metadata */}
 								<div className="flex-grow overflow-hidden">
-									<UriLink
-										className="-my-[6px] -mx-px px-px text-base font-medium"
-										uri={trackData?.tracks?.items[0]?.album.uri ?? ''}
-									>
-										{metadata.title}
-									</UriLink>
-									<UriLink
-										className="text-xs leading-5 opacity-90"
-										uri={trackData?.tracks?.items[0]?.artists?.[0]?.uri ?? ''}
-									>
-										{metadata.artist}
-									</UriLink>
+									<>
+										<UriLink
+											className="-my-[6px] -mx-px px-px text-base font-medium"
+											uri={trackData?.tracks?.items[0]?.album.uri ?? ''}
+										>
+											{metadata.title}
+										</UriLink>
+										<div className="flex gap-1">
+											{metadata.artists.map((artist) => (
+												<UriLink
+													key={artist}
+													className="text-xs leading-5 opacity-90 [&:not(:last-child)]:after:content-[',']"
+													uri={getArtistInfo(artist, trackData)?.uri ?? ''}
+												>
+													{artist}
+												</UriLink>
+											))}
+										</div>
+									</>
 								</div>
 
 								<div className="relative">

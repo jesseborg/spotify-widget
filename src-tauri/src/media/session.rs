@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use average_color::enums::Rgb;
 use futures::Future;
 use tailwind_palette::TailwindPalette;
 use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
@@ -22,6 +21,7 @@ use crate::media::lib::{
   MediaTimelineData,
   ThumbnailData,
 };
+use crate::utils::spotify::get_all_artists;
 use crate::utils::thumbnail::get_thumbnail_data;
 
 type ThreadSafeOption<T> = Arc<Mutex<Option<T>>>;
@@ -112,6 +112,8 @@ impl Session {
 						.map(|a| (a.r, a.g, a.b))
 						.unwrap_or((92,80,160));
 
+					let artists = get_all_artists(props.Artist()?.to_string().as_str(), props.Title()?.to_string().as_str())?;
+
 					event_sender.send(MediaEvent::MediaPropertiesChanged(
 						MediaSessionData {
 							is_play_enabled: controls.IsPlayEnabled()?,
@@ -120,7 +122,7 @@ impl Session {
 							is_previous_enabled: controls.IsPreviousEnabled()?,
 							is_next_enabled: controls.IsNextEnabled()?,
 							title: props.Title()?.to_string(),
-							artist: props.Artist()?.to_string(),
+							artists,
 							album: props.AlbumTitle()?.to_string(),
 							thumbnail: ThumbnailData {
 								base64,

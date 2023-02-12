@@ -1,4 +1,3 @@
-use prominence::Swatch;
 use serde::{Deserialize, Serialize};
 use tailwind_palette::TailwindPalette;
 use tokio::sync::broadcast;
@@ -48,7 +47,7 @@ pub struct MediaSessionData {
   pub is_previous_enabled: bool,
   pub is_next_enabled: bool,
   pub title: String,
-  pub artist: String,
+  pub artists: Vec<String>,
 	pub album: String,
   pub thumbnail: ThumbnailData,
 }
