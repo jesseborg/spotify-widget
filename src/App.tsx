@@ -45,12 +45,12 @@ function App() {
 	rspc.useSubscription(['media.mediaPropertiesChanged'], {
 		onData: async (data) => {
 			setMetadata(data);
-			setTrackData(await getTrackData(data.title, data.artists[0], data.album));
 			updateTheme(
 				data.thumbnail.palette.shades,
 				data.thumbnail.prominantColor,
 				data.thumbnail.averageColor
 			);
+			setTrackData(await getTrackData(data.title, data.artists[0], data.album));
 		}
 	});
 	rspc.useSubscription(['media.playbackInfoChanged'], { onData: setPlaybackData });
