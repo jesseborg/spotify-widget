@@ -141,5 +141,5 @@ function sanitize(input: string) {
 	if (!input.length) {
 		return input;
 	}
-	return input.replace(/[!#$&'()*+,/:;=?@[\]]/g, '');
+	return encodeURIComponent(input);
 }
