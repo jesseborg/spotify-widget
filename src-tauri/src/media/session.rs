@@ -360,7 +360,7 @@ impl Session {
     // println!("tried to set volume: {volume}");
 
 		if let Some(session) = self.audio_control.lock().unwrap().as_ref() {
-			session.volume_control().set_volume(volume).unwrap();
+			session.volume_control().set_volume(volume.clamp(0f32, 1f32)).unwrap();
 		}
   }
 }

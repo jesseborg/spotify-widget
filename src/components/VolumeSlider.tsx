@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useMouseWheel } from '../hooks/useMouseWheel';
 import { rspc } from '../utils/rspc';
 import { Slider } from './base/Slider';
+
+const STEP = 5 / 100;
 
 export const VolumeSliderSkeletonLoader = () => {
 	return <span className="block h-full w-2 animate-pulse rounded-full bg-theme-700 duration-200" />;
@@ -9,19 +12,32 @@ export const VolumeSliderSkeletonLoader = () => {
 export const VolumeSlider = () => {
 	const { mutateAsync: invokeMethod } = rspc.useMutation('media.invokeMethod');
 
+	const ref = useRef<HTMLSpanElement | null>(null);
+
 	const [volume, setVolume] = useState(0);
 
-	rspc.useQuery(['media.getVolume'], {
-		onSuccess: (volume) => setVolume(volume * 100)
-	});
-	rspc.useSubscription(['media.volumeChanged'], {
-		onData: (volume) => setVolume(volume * 100)
-	});
+	useMouseWheel(
+		ref,
+		{
+			// delta: 100 || -100
+			onChange: (delta) => {
+				commitValue(volume + STEP * (delta / -Math.abs(delta)));
+			}
+		},
+		[volume]
+	);
+
+	rspc.useQuery(['media.getVolume'], { onSuccess: setVolume });
+	rspc.useSubscription(['media.volumeChanged'], { onData: setVolume });
 
 	const handleValueChange = async (value: number) => {
-		setVolume(value);
+		commitValue(value);
+	};
 
-		await invokeMethod({ setVolume: Math.max(0, Math.min(100, value)) / 100 });
+	const commitValue = async (value: number) => {
+		const volume = Math.max(0, Math.min(1, value));
+		setVolume(volume);
+		invokeMethod({ setVolume: volume });
 	};
 
 	if (volume < 0) {
@@ -31,9 +47,11 @@ export const VolumeSlider = () => {
 	return (
 		<div className="relative h-full w-1">
 			<Slider
+				ref={ref}
 				value={[volume]}
+				max={1}
 				className="absolute left-1/2 -translate-x-1/2"
-				step={5}
+				step={STEP}
 				onValueChange={(value) => handleValueChange(value[0])}
 				orientation="vertical"
 			/>
