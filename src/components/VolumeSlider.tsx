@@ -3,7 +3,7 @@ import { rspc } from '../utils/rspc';
 import { Slider } from './base/Slider';
 
 export const VolumeSliderSkeletonLoader = () => {
-	return <span className="block h-full w-2 animate-pulse rounded-full bg-theme-200 duration-200" />;
+	return <span className="block h-full w-2 animate-pulse rounded-full bg-theme-700 duration-200" />;
 };
 
 export const VolumeSlider = () => {
