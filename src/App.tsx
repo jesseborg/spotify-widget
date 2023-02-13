@@ -10,7 +10,7 @@ import { clsx } from './utils/clsx';
 import { resetTheme, updateTheme } from './utils/color';
 import { rspc } from './utils/rspc';
 import { getTrackData, SpotifySearchResult } from './utils/spotify';
-import { getArtistInfo } from './utils/utils';
+import { getArtistInfo, getArtists } from './utils/utils';
 
 const LoadingSkeleton = () => {
 	return (
@@ -49,7 +49,17 @@ function App() {
 				data.thumbnail.prominantColor,
 				data.thumbnail.averageColor
 			);
-			setTrackData(await getTrackData(data.title, data.artists[0], data.album));
+
+			const trackData = await getTrackData(data.title, data.artists[0], data.album);
+			console.log(trackData);
+
+			if (trackData) {
+				setTrackData(trackData);
+				setMetadata({
+					...data,
+					artists: getArtists(trackData)?.map((artist) => artist.name) ?? data.artists
+				});
+			}
 		}
 	});
 	rspc.useSubscription(['media.playbackInfoChanged'], { onData: setPlaybackData });
