@@ -19,7 +19,7 @@ fn is_white(l: f32) -> bool { l >= WHITE_MIN_LIGHTNESS }
 
 pub(crate) fn get_color_palette(image: &DynamicImage) -> Palette {
   PaletteBuilder::from_image(image.to_rgba8())
-    .clear_filters() // remove the default filter
-    .add_filter(CustomFilter) // add our custom filter
+    // .clear_filters() // remove the default filter
+    // .add_filter(CustomFilter) // add our custom filter
     .generate()
 }
